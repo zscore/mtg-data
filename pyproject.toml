@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mtgdata"
+version = "0.1.0"
+description = "17Lands draft, game and replay data: download, parquet conversion, loaders and shared encodings"
+requires-python = ">=3.11"
+dependencies = ["numpy>=2.5", "polars>=1.44", "pyarrow>=25"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

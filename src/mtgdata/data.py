@@ -1,6 +1,7 @@
 """Download 17Lands public draft data and load it as dense per-draft tensors."""
 from __future__ import annotations
 
+import os
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,9 +9,12 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 
-ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "data" / "raw"
-PARQUET = ROOT / "data" / "parquet"
+# All 17Lands files and derived caches live under one directory, shared by every analysis repo.
+# Default: this repo's data/; set MTG_DATA_DIR to put it elsewhere.
+DATA = Path(os.environ.get("MTG_DATA_DIR", Path(__file__).resolve().parents[2] / "data"))
+RAW = DATA / "raw"
+PARQUET = DATA / "parquet"
+FEATURES = DATA / "features"  # per-set feature caches and pick shards written by the analysis repos
 S3 = "https://17lands-public.s3.amazonaws.com/analysis_data"
 
 N_PACKS, N_SEATS = 3, 8

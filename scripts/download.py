@@ -10,7 +10,7 @@ import numpy as np
 import polars as pl
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from openlane.data import PARQUET, download  # noqa: E402
+from mtgdata.data import PARQUET, download  # noqa: E402
 
 ALL_SETS = ["LCI", "MKM", "OTJ", "BLB", "DSK", "FDN", "DFT", "TDM", "FIN", "EOE", "TLA", "TMT",
             "SOS", "ECL", "MSH"]
