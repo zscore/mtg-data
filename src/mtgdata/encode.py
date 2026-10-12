@@ -2,9 +2,11 @@
 tokens, what the other seven took, card features and per-draft context."""
 from __future__ import annotations
 
+import pickle
+
 import numpy as np
 
-from .data import COLORS, N_PACKS, N_SEATS, RANK_ORDER, RARITIES, DraftTensors
+from .data import COLORS, FEATURES, N_PACKS, N_SEATS, RANK_ORDER, RARITIES, DraftTensors
 
 CARD_TYPES = ("Creature", "Artifact", "Enchantment", "Instant", "Sorcery", "Land", "Planeswalker",
               "Battle", "Kindred")
@@ -96,3 +98,42 @@ def draft_context(t: DraftTensors, rank: bool = True, skill: bool = True,
         days = (ts - ts.min()).astype(np.float64) / 86400
         x.append(np.stack([days / 30, np.log1p(days) / np.log1p(30)], 1).astype(np.float32))
     return np.concatenate(x, 1) if x else np.zeros((D, 0), np.float32)
+
+
+class _AnyClassUnpickler(pickle.Unpickler):
+    """Reads a pickle even when it names classes from packages that aren't installed (the wheel feature
+    cache stores openlane.features.CardStats next to the splits); those load as plain objects."""
+
+    def find_class(self, module, name):
+        try:
+            return super().find_class(module, name)
+        except (ModuleNotFoundError, AttributeError):
+            return type(name, (), {})
+
+
+def splits_for(t: DraftTensors, set_code: str, event: str = "PremierDraft") -> dict[str, np.ndarray]:
+    """Train/val/test draft indices: the split saved with the wheel features (FEATURES/<set>.<event>/meta.pkl)
+    when it covers these drafts, else chronological 70/15/15. Every model uses the same split."""
+    p = FEATURES / f"{set_code}.{event}" / "meta.pkl"
+    if p.exists():
+        with open(p, "rb") as f:
+            sp = _AnyClassUnpickler(f).load()["splits"]
+        if sum(len(v) for v in sp.values()) == len(t.draft_id):
+            return sp
+    D = len(t.draft_id)
+    a, b = int(0.7 * D), int(0.85 * D)
+    return {"train": np.arange(a), "val": np.arange(a, b), "test": np.arange(b, D)}
+
+
+def card_inputs(t: DraftTensors, meta: bool, rich: bool, text: bool = False) -> np.ndarray | None:
+    """[C, F] per-card model inputs: card_features (meta), Scryfall facts (rich) and the rules-text
+    embedding from picknet's scripts/card_text_embeddings.py (text). None if all are off."""
+    parts = []
+    if meta:
+        parts.append(card_features(t.meta))
+    if rich:
+        from .cardinfo import card_info, card_matrix
+        parts.append(card_matrix(card_info(t.names, t.set_code)))
+    if text:
+        parts.append(np.load(FEATURES / f"{t.set_code}.PremierDraft" / "text_emb.npy"))
+    return np.hstack(parts).astype(np.float32) if parts else None
