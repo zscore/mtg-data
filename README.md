@@ -9,7 +9,7 @@ Used by:
 
 | repo | what it is |
 |---|---|
-| [mtg-open-lane](../mtg-open-lane) | wheel prediction and open-lane analysis (WheelNet) |
+| [wheelnet](../wheelnet) | wheel prediction and open-lane analysis (WheelNet) |
 | [picknet](../picknet) | PickNet, the pick-prediction transformer |
 | [mtg-deck-strength](../mtg-deck-strength) | deck strength, DraftEncoder replication, card synergy |
 | [mtg-bombs](../mtg-bombs) | bombs analysis and blog post |
